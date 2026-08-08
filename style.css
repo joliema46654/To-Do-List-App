@@ -1,0 +1,297 @@
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Caveat", cursive;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url("background.jpg") no-repeat center center/cover;
+}
+
+.empty-image {
+  width: 150px; /* Adjust this value to make it bigger or smaller */
+  height: auto; /* Keeps the original image proportions */
+  display: block;
+  margin: 20px auto 0; /* Centers the image inside its container */
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0% 20px;
+}
+
+/*this styles the container around the todo list*/
+.todo-app {
+  width: 100%;
+  max-width: 400%;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 30px;
+  color: aliceblue;
+  border-radius: 20px;
+  box-shadow: 0 0 100px rgb(0, 0, 0, 0.5);
+  border: 3px solid rgb(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+/*this style is for title of app */
+.todo-app h1 {
+  font-size: 2rem;
+  color: black;
+}
+
+/*this styles the progress bar*/
+.stat-container {
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+/*styles size of content*/
+.details {
+  width: 100%;
+}
+
+/*styles the text*/
+.details h3 {
+  color: #000;
+}
+/*styles the progress bar*/
+#progressbar {
+  width: 100%;
+  height: 7px;
+  background: rgb(149, 135, 240);
+  border-radius: 20px;
+  position: relative;
+  margin-top: 15px;
+}
+
+/*style the progression of progression bar*/
+#progress {
+  width: 0%;
+  height: 100%;
+  background: rgb(92, 92, 219);
+  border-radius: 20px;
+  transition: width 0.3s ease;
+}
+
+/*style the progression tracker to keep track of number of task*/
+#numbers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgb(92, 92, 219);
+  border: 2px solid rgba(31, 7, 152, 0.974);
+  font-weight: bold;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: #000;
+}
+
+/* this style where the input box goes in the container*/
+.input-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/*this styles the input field, so the text that is typed into input box */
+.input-area input {
+  flex: 1;
+  padding: 10px 17px; /*this sets the padding to 10px for top and bottom and 17px for the side*/
+  font-size: 1.1rem;
+  border: none;
+  outline: none;
+  border-radius: 22px;
+  background-color: rgb(173, 216, 230, 0.3);
+  color: black;
+}
+
+/*this styles the placeholder text within the input box*/
+.input-area input ::placeholder1 {
+  color: #bcbcbc;
+}
+
+/*style button inside input area*/
+.input-area button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 8px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.1 rem;
+  background: rgba(173, 216, 230, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: all 0.2s ease; /*transition affect for properties over 0.2sec for smooth interacterations*/
+}
+
+/*style the how the button looks when u hover over it*/
+.input-area button:hover {
+  transform: scale(1.1);
+  background: lightblue;
+}
+
+/*style the TODO container that holds all todo items and the list*/
+.todos-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*style the actual task list*/
+#task-list {
+  color: black;
+  width: 100%;
+}
+
+/*style the task list items*/
+#task-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgb(173, 216, 230, 0.3);
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 1.2rem;
+  color: black;
+  position: relative;
+  transition: box-shadow 0.2s ease;
+}
+
+/*style a hover effect for task list items, it shows a slight shadow around box when u hover over it*/
+#task-list li:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/*style the how the check box for task list items*/
+#task-list li .checkbox {
+  min-width: 20px;
+  height: 20px;
+  border: 2px solid rgba(3, 47, 76, 0.3);
+  background: transparent;
+  border-radius: 50%;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/*when the checkbox is checked*/
+#task-list li.checkbox:checked {
+  background: blue;
+  transform: scale(1.1);
+}
+
+/*to make the checkbox look even more fancy*/
+#task-list li .checkbox:checked::before {
+  content: "\2714";
+  color: blue;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+}
+
+/*designing span of each taskText item*/
+#task-list li span {
+  flex: 1;
+  margin-left: 10px;
+  word-wrap: break-word;
+  font-size: 1.5rem;
+}
+
+/*adding style to this element so task are crossed off the list when checked complete
+add a line drawn through the text*/
+#task-list li.completed span {
+  text-decoration: 2px line-through #000;
+  color: #000;
+}
+/*style the edit and delete button placement*/
+.task-buttons {
+  display: flex;
+  gap: 10px;
+  margin-right: auto;
+}
+
+/*style the actual buttons themselves*/
+.task-buttons button {
+  background: rgba(173, 216, 230, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: black;
+  font: size 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/*hover effect of the edit and delete button*/
+.task-buttons button:hover {
+  transform: scale(1.2);
+}
+
+/*styles the edit button*/
+.task-buttons .edit-btn {
+  background: lightblue;
+}
+
+/*styles the delete button*/
+.task-buttons .delete-btn {
+  background: pink;
+}
+
+/*Make design responsive - make it be able to automatically change size and layout to look and work great on any screen*/
+/*Media Queries*/
+@media (max-width: 600px) {
+  .container {
+    margin: 0 20px;
+    padding: 0 10px;
+  }
+
+  .todo-app {
+    padding: 1.5rem;
+    gap: 20px;
+  }
+
+  #numbers {
+    width: 60px;
+    height: 60px;
+    font-size: 1rem;
+  }
+
+  .input-area input {
+    font-size: 1rem;
+  }
+
+  #task-list li {
+    font-size: 1 rem;
+  }
+}
