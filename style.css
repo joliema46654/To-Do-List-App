@@ -102,7 +102,7 @@ body {
   width: 80px;
   height: 80px;
   background: rgb(92, 92, 219);
-  border: 2px solid rgba(31, 7, 152, 0.974);
+  border: 2px solid rgba(80, 62, 170, 0.974);
   font-weight: bold;
   border-radius: 50%;
   font-size: 1.5rem;
@@ -112,9 +112,11 @@ body {
 /* this style where the input box goes in the container*/
 .input-area {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 10px;
 }
 
 /*this styles the input field, so the text that is typed into input box */
@@ -129,9 +131,70 @@ body {
   color: black;
 }
 
+/*this styles the category selection*/
+.input-area select {
+  flex: 1;
+  padding: 10px 17px;
+  font-size: 1.1rem;
+  border: none;
+  outline: none;
+  border-radius: 22px;
+  background-color: rgb(173, 216, 230, 0.3);
+  color: #000;
+  font-family: "Caveat", cursive;
+  cursor: pointer;
+}
+
 /*this styles the placeholder text within the input box*/
 .input-area input ::placeholder1 {
   color: #bcbcbc;
+}
+
+/*styles the category selectory for each task*/
+.new-category-row {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 10px;
+  border-radius: 22px;
+}
+
+/*style the text box for category input*/
+.new-category-row input[type="text"] {
+  flex: none;
+  min-width: 150px;
+  width: 130px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 14px;
+  background-color: rgba(173, 216, 230, 0.5);
+  color: black;
+}
+
+/*style the category row input for colours*/
+.new-category-row input[type="color"] {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+
+.new-category-row button {
+  flex: none;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 14px;
+  background: rgb(92, 92, 219);
+  color: white;
+  font-family: "Caveat", cursive;
+  font-size: 1rem;
+  cursor: pointer;
 }
 
 /*style button inside input area*/
@@ -144,7 +207,7 @@ body {
   border-radius: 50%;
   color: #fff;
   font-size: 1.1 rem;
-  background: rgba(173, 216, 230, 0.4);
+  background: rgba(126, 197, 221, 0.4);
   border: 2px solid rgba(255, 255, 255, 0.18);
   cursor: pointer;
   transition: all 0.2s ease; /*transition affect for properties over 0.2sec for smooth interacterations*/
@@ -156,12 +219,100 @@ body {
   background: lightblue;
 }
 
-/*style the TODO container that holds all todo items and the list*/
+/*style layout for the to do list and calender*/
+.main-content {
+  display: flex;
+  gap: 30px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+/*left side - style the TODO container that holds all todo items and the list*/
 .todos-container {
+  flex: 1;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/*right side - style the calander layout*/
+.calender-container {
+  flex: 1.4;
+  max-width: 550px;
+  background-color: rgba(117, 162, 225, 0.5);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.calender-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calender-weekdays,
+.calender-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.calender-weekdays div {
+  font-weight: bold;
+  padding: 10px 0;
+}
+
+.calender-days > div {
+  padding: 15px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  background-color: lightblue;
+  color: black;
+  border: 1px solid #ddd;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.calender-days > div:hover {
+  background-color: #e0e0e0;
+}
+
+/*style how the colored line for task assigned that to that day are placed=> stacked top to bottom*/
+.category-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 80%;
+  margin-top: 4px;
+}
+
+/*styles the actual colored lines */
+.category-line {
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+}
+
+/*styles how date cell on calender looks when all task are complete*/
+.calender-days div.all-complete {
+  background-color: #6ee7b7 !important;
+  color: #064e3b !important;
+}
+
+.calender-days div.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/*visual indicator for days that have a task*/
+.calender-days div.has-event {
+  border-bottom: 3px solid(#ff4757);
 }
 
 /*style the actual task list*/
@@ -292,6 +443,6 @@ add a line drawn through the text*/
   }
 
   #task-list li {
-    font-size: 1 rem;
+    font-size: 1.1rem;
   }
 }

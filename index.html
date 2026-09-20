@@ -20,7 +20,7 @@
         <h1>To-Do App</h1>
         <div class="stat-container">
           <div class="details">
-            <h3>You Got This!!!</h3>
+            <h3>You Got This!!</h3>
             <div id="progressbar">
               <div id="progress"></div>
             </div>
@@ -31,14 +31,62 @@
         </div>
         <form class="input-area">
           <input type="text" id="task-input" placeholder="Add a new task..." />
-          <button type="submit" id="add-task-btn">
+          <!--add dropdown to be able to select category-->
+          <select id="task-category"></select>
+          <!--add buttons to be able to edit the added categories-->
+          <button type="button" id="edit-category-btn" title="Edit category">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <!--add buttons to delete categories that are not used-->
+          <button
+            type="button"
+            id="delete-category-btn"
+            title="Delete category"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+          <!--add to row a place where user can categorize task-->
+          <div id="new-category-row" class="new-category-row">
+            <!--add an input area for user to name category and assign a color to it, start with a default color as a placeholder-->
+            <input
+              type="text"
+              id="new-category-name"
+              placeholder="Category name"
+            />
+            <input type="color" id="new-category-color" value="#94a3b8" />
+            <!--add a button to be able to add category-->
+            <button type="button" id="confirm-category-btn">Add</button>
+          </div>
+          <input type="date" id="task-date" />
+          <!--added a date picker field-->
+          <button type="button" id="add-task-btn">
             <i class="fa-solid fa-plus"></i>
           </button>
         </form>
-        <div class="todos-container">
-          <ul id="task-list"></ul>
 
-          <img class="empty-image" src="snoopy.png" alt="empty" />
+        <div class="main-content">
+          <div class="todos-container">
+            <ul id="task-list"></ul>
+            <img class="empty-image" src="snoopy.png" alt="empty" />
+          </div>
+          <!--create a calander container next to do do list-->
+          <div class="calender-container">
+            <div class="calender-header">
+              <button id="prev-month">&lt</button>
+              <h2 id="month-year-display"></h2>
+              <button id="next-month">&gt</button>
+            </div>
+            <div class="calender-weekdays">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            <div id="calender-days" class="calender-days"></div>
+          </div>
         </div>
       </div>
     </div>
