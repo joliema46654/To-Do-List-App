@@ -239,8 +239,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   //create variables to store calender elements
   let currentDate = new Date();
-  let selectedDate = new Date().toISOString().split("T")[0]; //returns current date
-
+  currentDate.setDate(1);
+  const now = new Date(); // today, used only to build selectedDate
+  let selectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const toggleEmptyState = () => {
     emptyImage.style.display =
       //if tasklist has 0 children(sub elements like for ul it's li), set the display to 'block' (visible empty state image), else 'none'(hidden)
@@ -302,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //toggleEmptyState function checks if list is empty and shows message if it is
     toggleEmptyState();
     //update progress - updates the task progression like a progress bar
-    updateProgress();
+    updateProgress(false);
     //reload calender after loading all the task
     renderCalendar();
   };
@@ -438,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //add the new list element to task list <ul> on the page
     taskList.appendChild(li);
     //clear out the input box so it's ready for the user's next task
-    taskInput.value = " ";
+    taskInput.value = "";
     //call toggleEmptyState function to check state if task exist in list
     toggleEmptyState();
     //add updateProgress checkcCompletion to update progress bar when a task is added
@@ -463,8 +464,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     //display the each date in a month
-    // Determines the numeric day of the month for the very first calendar block (always returns 1)
-    const firstDay = new Date(year, month, 1).getDate();
+    // Weekday of the 1st (0 = Sunday ... 6 = Saturday), used to add blank cells before it
+    const firstDay = new Date(year, month, 1).getDay();
     // Finds the exact final day count of the current month by querying the "0th" day of the subsequent month
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 

@@ -13,6 +13,10 @@
       referrerpolicy="no-referrer"
     />
     <link rel="stylesheet" href="style.css" />
+
+    <!--json file for pwa-->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#5c5cdb" />
   </head>
   <body>
     <div class="container">
@@ -90,7 +94,11 @@
         </div>
       </div>
     </div>
+    <script src="script.js"></script>
+    <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
+    <script>
+      if ("serviceWorker" in navigator)
+        navigator.serviceWorker.register("sw.js");
+    </script>
   </body>
-  <script src="script.js"></script>
-  <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
 </html>
