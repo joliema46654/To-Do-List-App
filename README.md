@@ -12,7 +12,7 @@ A sleek, responsive, and highly interactive To-Do List web application built usi
 *   **Task Completion:** Checkboxes let you cross off completed items, changing their status and locking edits on finished items.
 *   **Dynamic Empty State:** Automatically shrinks the workspace and displays an empty state image when no tasks exist.
 *   **Completion Celebration:** Integrates the `canvas-confetti` library to launch an absolute burst of confetti when you successfully cross off all the tasks on your list.
-*   **Local Storage Syncing:** Keeps your tasks and their completion states intact even if you close the tab or refresh the browser.
+*   *   **Authentication for User login:** Register and sign in to your own account to access your own task and categories
 
 ---
 
