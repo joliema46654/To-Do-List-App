@@ -31,6 +31,97 @@ body {
   padding: 0% 20px;
 }
 
+#auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+#auth-bar button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 14px;
+  background: rgb(92, 92, 219);
+  color: white;
+  font-family: "Caveat", cursive;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+#auth-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#auth-modal-overlay.open {
+  display: flex;
+}
+
+#auth-modal {
+  background: #fff;
+  color: black;
+  padding: 30px;
+  border-radius: 16px;
+  width: 300px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#auth-modal h3 {
+  margin-bottom: 5px;
+}
+
+#auth-modal input {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.auth-modal-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-modal-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  background: rgb(92, 92, 219);
+  color: white;
+  cursor: pointer;
+}
+
+#logged-out-message {
+  text-align: center;
+  color: #333;
+  font-size: 1.3rem;
+  padding: 20px 0;
+}
+
+#close-auth-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #666;
+}
+
 /*this styles the container around the todo list*/
 .todo-app {
   width: 100%;
@@ -206,7 +297,7 @@ body {
   padding: 8px;
   border-radius: 50%;
   color: #fff;
-  font-size: 1.1 rem;
+  font-size: 1.1rem;
   background: rgba(126, 197, 221, 0.4);
   border: 2px solid rgba(255, 255, 255, 0.18);
   cursor: pointer;

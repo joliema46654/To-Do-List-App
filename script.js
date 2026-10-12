@@ -36,9 +36,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const deleteCategoryBtn = document.getElementById("delete-category-btn");
   let editingCategoryName = null; // tracks whether the row is in "edit" mode vs "add" mode
 
+  //elements controlling whether the to-do UI itself is visible: the app only
+  //shows once the user is signed in, and shows a plain message otherwise
+  const appContent = document.getElementById("app-content");
+  const loggedOutMessage = document.getElementById("logged-out-message");
+
   //category logic
-  //TODO: what does this do
-  //create a section for category name to be add
+  //the dropdown's "add new category" option is given this special value so the
+  //change handler can tell it apart from someone picking a real, existing category
   const addCategoryValue = "add_new";
 
   //create a list of default category and assign them a default color
@@ -48,20 +53,186 @@ document.addEventListener("DOMContentLoaded", () => {
     Other: "#94a3b8",
   };
 
-  //TODO: get comment for function of why empty object is being created
+  //holds the current set of categories as { name: colorHex } pairs. Starts empty
+  //and gets filled in by loadCategories() below (either from localStorage or the defaults)
   let categories = {};
+
+  //backend sync
+  const API_URL = "https://to-do-app-backend-7siu.onrender.com";
+  const authEmail = document.getElementById("auth-email");
+  const authPassword = document.getElementById("auth-password");
+  const authStatus = document.getElementById("auth-status");
+  const authModalTitle = document.getElementById("auth-modal-title");
+  const openAuthBtn = document.getElementById("open-auth-btn");
+  const closeAuthBtn = document.getElementById("close-auth-btn");
+  const authModalOverlay = document.getElementById("auth-modal-overlay");
+  const logoutBtn = document.getElementById("logout-btn");
+  const getToken = () => localStorage.getItem("authToken");
+
+  //reveals the to-do app UI and hides the "please sign in" message
+  const showApp = () => {
+    appContent.style.display = "block";
+    loggedOutMessage.style.display = "none";
+  };
+
+  //hides the to-do app UI and shows the "please sign in" message instead;
+  //also clears whatever's currently rendered so nothing lingers on screen
+  const hideApp = () => {
+    appContent.style.display = "none";
+    loggedOutMessage.style.display = "block";
+    taskList.innerHTML = "";
+    toggleEmptyState();
+    updateProgress(false);
+  };
+
+  openAuthBtn.addEventListener("click", () => {
+    authModalOverlay.classList.add("open");
+    if (getToken()) {
+      //already signed in: show the modal in "account" mode (just a log out option)
+      authModalTitle.textContent = "Account";
+      document.querySelector(".auth-modal-buttons").style.display = "none";
+      authEmail.style.display = "none";
+      authPassword.style.display = "none";
+      logoutBtn.style.display = "block";
+    } else {
+      //signed out: show the modal in "sign in" mode (email/password + register/login)
+      authModalTitle.textContent = "Sign in to sync";
+      document.querySelector(".auth-modal-buttons").style.display = "flex";
+      authEmail.style.display = "block";
+      authPassword.style.display = "block";
+      logoutBtn.style.display = "none";
+    }
+  });
+  closeAuthBtn.addEventListener("click", () => {
+    authModalOverlay.classList.remove("open");
+  });
+  authModalOverlay.addEventListener("click", (e) => {
+    if (e.target === authModalOverlay)
+      authModalOverlay.classList.remove("open"); // click outside modal closes it
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("authToken");
+    //clear this browser's cached task/category data too, so a different
+    //account signing in later on this same device doesn't briefly see
+    //leftover data from this account before pullFromServer() replaces it
+    localStorage.removeItem("task");
+    localStorage.removeItem("categories");
+    categories = { ...defaultCategories };
+    authStatus.textContent = "";
+    openAuthBtn.textContent = "Sign in";
+    logoutBtn.style.display = "none";
+    authModalOverlay.classList.remove("open");
+    hideApp();
+  });
+
+  //sends whatever is currently on screen (tasks + categories) up to the server,
+  //so this device's latest state becomes the server's latest state
+  const pushToServer = async () => {
+    const token = getToken();
+    if (!token) return;
+    const currentTasks = Array.from(taskList.querySelectorAll("li")).map(
+      (li) => ({
+        text: li.querySelector(".task-text").textContent,
+        completed: li.querySelector(".checkbox").checked,
+        date: li.dataset.date || selectedDate,
+        category: li.dataset.category || "Other",
+      }),
+    );
+    try {
+      await fetch(`${API_URL}/api/state`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tasks: currentTasks, categories }),
+      });
+    } catch (error) {
+      console.error("Sync to server failed:", error);
+    }
+  };
+
+  //fetches this user's saved tasks/categories from the server and rebuilds
+  //the whole page from that data, used right after login and on page load
+  const pullFromServer = async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/state`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      categories = Object.keys(data.categories).length
+        ? data.categories
+        : { ...defaultCategories };
+      localStorage.setItem("categories", JSON.stringify(categories));
+      localStorage.setItem("task", JSON.stringify(data.tasks));
+      populateCategorySelect();
+      taskList.innerHTML = "";
+      data.tasks.forEach(({ text, completed, date, category }) =>
+        addTask(text, completed, false, date, category),
+      );
+      toggleEmptyState();
+      updateProgress(false);
+      renderCalendar();
+    } catch (error) {
+      console.error("Pull from server failed:", error);
+    }
+  };
+
+  //shared handler for both Register and Log in buttons; endpoint is either
+  //"register" or "login" and decides which API route gets called
+  const authRequest = async (endpoint) => {
+    authStatus.textContent = "Connecting...";
+    try {
+      const res = await fetch(`${API_URL}/api/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: authEmail.value,
+          password: authPassword.value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        authStatus.textContent = data.error || "Something went wrong";
+        return;
+      }
+      localStorage.setItem("authToken", data.token);
+      authStatus.textContent = `Signed in as ${data.email}`;
+      logoutBtn.style.display = "inline-block";
+      openAuthBtn.textContent = "Account";
+      //modal closes automatically after a successfull login
+      authModalOverlay.classList.remove("open");
+      showApp();
+      pullFromServer();
+    } catch (error) {
+      authStatus.textContent = "Connection failed, try again";
+    }
+  };
+
+  document
+    .getElementById("register-btn")
+    .addEventListener("click", () => authRequest("register"));
+  document
+    .getElementById("login-btn")
+    .addEventListener("click", () => authRequest("login"));
 
   //reload categories from local storage or prev save
   const loadCategories = () => {
     const saved = JSON.parse(localStorage.getItem("categories"));
     categories =
       saved && Object.keys(saved).length ? saved : { ...defaultCategories };
-    saveCategories();
+    localStorage.setItem("categories", JSON.stringify(categories)); // local only, no server push
   };
 
   //create a function to save categories created
   const saveCategories = () => {
     localStorage.setItem("categories", JSON.stringify(categories));
+    pushToServer();
   };
 
   //create a function to generate options of categories for dropdown
@@ -74,30 +245,35 @@ document.addEventListener("DOMContentLoaded", () => {
       taskCategorySelect.appendChild(opt);
     });
 
-    //TODO: add comment and figure out how it works
+    //adds one extra option at the end of the dropdown that doesn't represent a
+    //real category — picking it is how the user opens the "add new category" row
     const addOpt = document.createElement("option");
     addOpt.value = addCategoryValue;
     addOpt.textContent = "➕ Add new category";
     taskCategorySelect.appendChild(addOpt);
 
-    //TODO: add comment and figure out how it works
+    //if a specific category name was passed in (e.g. the one just added or
+    //edited), select it in the dropdown so the UI reflects the latest change
     if (selectValue && categories[selectValue]) {
       taskCategorySelect.value = selectValue;
     }
   };
 
-  //TODO: add comment and figure out how it works
+  //creates a new category (or updates the color of one that already exists
+  //under a different letter-case) and returns its final stored name
   const addCategory = (name, color) => {
     const cleanName = name.trim();
     if (!cleanName) return null;
 
-    //TODO: add comment and figure out how it works
+    //category names are matched case-insensitively, so typing "work" when
+    //"Work" already exists reuses "Work" instead of creating a duplicate
     const existingKey = Object.keys(categories).find(
       (key) => key.toLowerCase() === cleanName.toLowerCase(),
     );
     const finalName = existingKey || cleanName;
 
-    //TODO: add comment and figure out what to do
+    //use the color passed in, or keep the category's current color if it
+    //already existed, or fall back to a default gray as a last resort
     categories[finalName] = color || categories[finalName] || "#94a3b8";
     saveCategories();
     populateCategorySelect(finalName);
@@ -105,7 +281,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   //add a editCategory function to be able to rename the category
-  //TODO: add comments to explain what each line does
+  //renames an existing category and updates every task currently tagged with
+  //the old name so they point at the new name/color instead
   const editCategory = (oldName, newName, color) => {
     const cleanNew = newName.trim();
     if (!cleanNew) return;
@@ -134,7 +311,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   //add a deleteCategory function to delete unneeded categories
-  //TODO: figure out what each line in this function does
+  //removes a category entirely; refuses to delete the last remaining one, asks
+  //for confirmation, and reassigns any of its tasks to "Other" so nothing is lost
   const deleteCategory = (name) => {
     if (Object.keys(categories).length <= 1) {
       alert("You need at least one category");
@@ -161,14 +339,17 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCalendar();
   };
 
-  //TODO: add comment for the rest and figure out what it does
+  //safety net: if a task somehow references a category name that isn't in the
+  //categories object (e.g. loaded from old/stale data), silently create it
+  //instead of leaving the task with a missing/undefined color
   const ensureCategoryExists = (name) => {
     if (!categories[name]) {
       addCategory(name, "#94a3b8");
     }
   };
 
-  //TODO: add comment for the rest and figure out what it does
+  //reveals the "new category" name + color row, hides the date field to make
+  //room for it, and focuses the name input so the user can start typing right away
   const showNewCategoryRow = () => {
     newCategoryRow.style.display = "flex";
     taskDateInput.style.display = "none"; // hide the date field while adding/editing a category
@@ -176,13 +357,16 @@ document.addEventListener("DOMContentLoaded", () => {
     newCategoryNameInput.focus();
   };
 
-  //TODO: add comment for the rest and figure out what it does
+  //hides the "new category" row and brings the date field back once the user
+  //is done adding or editing a category
   const hideNewCategoryRow = () => {
     newCategoryRow.style.display = "none";
     taskDateInput.style.display = ""; // restore it once category editing is done
   };
 
-  //TODO: add comment for the rest and figure out what it does
+  //when the category dropdown changes: if the user picked the special
+  //"add new category" option, open the new-category row in "add" mode;
+  //otherwise make sure that row is hidden
   taskCategorySelect.addEventListener("change", () => {
     if (taskCategorySelect.value === addCategoryValue) {
       editingCategoryName = null;
@@ -193,7 +377,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  //TODO: add comment for the rest and figure out what it does
+  //handles the Add/Save button inside the new-category row: creates a new
+  //category, or (if editingCategoryName is set) saves an edit to an existing one
   confirmCategoryBtn.addEventListener("click", () => {
     const name = newCategoryNameInput.value.trim();
     const color = newCategoryColorInput.value;
@@ -209,7 +394,8 @@ document.addEventListener("DOMContentLoaded", () => {
     hideNewCategoryRow();
   });
 
-  //TODO: add comment for the rest and figure out what it does
+  //lets the user press Enter in the category name field instead of having to
+  //click the Add/Save button
   newCategoryNameInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -217,8 +403,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  //TODO: add comment explain what each line does
   //add event listener for the edit category buttons
+  //puts the new-category row into "edit" mode for whichever category is
+  //currently selected in the dropdown, pre-filling its existing name and color
   editCategoryBtn.addEventListener("click", () => {
     const current = taskCategorySelect.value;
     if (!current || current === addCategoryValue) return;
@@ -229,8 +416,8 @@ document.addEventListener("DOMContentLoaded", () => {
     showNewCategoryRow();
   });
 
-  //TODO: add comment and figure what this does
   //add event listener for the delete category buttons
+  //deletes whichever category is currently selected in the dropdown
   deleteCategoryBtn.addEventListener("click", () => {
     const current = taskCategorySelect.value;
     if (!current || current === addCategoryValue) return;
@@ -289,6 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //store array in localStorage with localStorage.setItem
     //first argument is 'task' the key and the second is JSON.stringify tasks, which converts the array into a JSON string
     localStorage.setItem("task", JSON.stringify(task));
+    pushToServer();
   };
 
   //this function class addTask() for every saved task and addTask() needs the categories object ot gave entries in it
@@ -330,7 +518,10 @@ document.addEventListener("DOMContentLoaded", () => {
     //resolve's the task's date by checking the provided parameter, the manual date input field, or defaulting to the highlighted calendar date
     const dateToUse = taskDate || taskDateInput.value || selectedDate;
 
-    //TODO: add comment and figure out what this function does
+    //resolve which category this task belongs to: an explicitly passed-in
+    //category (used when reloading saved tasks) wins first, then whatever is
+    //currently selected in the dropdown (as long as it isn't the "add new"
+    //placeholder option), and "Other" if nothing else applies
     let categoryToUse =
       taskCategory ||
       (taskCategorySelect.value !== addCategoryValue
@@ -342,7 +533,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Store the date on the element
     li.dataset.date = dateToUse;
-    //TODO: how does this work + comments
+    //stores the category name directly on the <li> element (as a data attribute)
+    //so later code (editing, deleting, filtering by day, etc.) can read which
+    //category this task belongs to without having to re-parse its visible text
     li.dataset.category = categoryToUse;
     li.style.borderLeftColor = categoryColor;
     //use innerHTML(used so it can update html which each task added - dynamic programming) + backticks to convert multi-line HTML string into real DOM elements
@@ -352,18 +545,20 @@ document.addEventListener("DOMContentLoaded", () => {
     //add div element with class task button and it will hold two buttons
     //first button is to edit task, second is to delete task
     //if completed is true the string checked is added to the checkbox, if false, it leaves it unchecked
-    //TODO: add category elements to innerHTML
     li.innerHTML = `
     <input type="checkbox" class="checkbox"
     ${completed ? "checked" : ""} /> 
-    <span class="task-text">${taskText}</span> 
-    <span class="category-badge" style="background:${categoryColor};">${categoryToUse}</span>
+    <span class="task-text"></span> 
+    <span class="category-badge" style="background:${categoryColor};"></span>
     <small style="color: black; font-size: 1rem; margin-left: 15px;">${dateToUse}</small>
     <div class="task-buttons">
         <button class= "edit-btn"><i class="fa-solid fa-pen"></i></button>
         <button class ="delete-btn"><i class="fa-solid fa-trash"></i></button>
     </div>
     `;
+    // Set text content safely (not via innerHTML) so special characters in task text can't break the markup
+    li.querySelector(".task-text").textContent = taskText;
+    li.querySelector(".category-badge").textContent = categoryToUse;
     //finds and stores checkbox elements inside a specific list item
     const checkbox = li.querySelector(".checkbox");
 
@@ -407,15 +602,17 @@ document.addEventListener("DOMContentLoaded", () => {
     editBtn.addEventListener("click", () => {
       //check if the checkbox inside task is not checked/completed
       if (!checkbox.checked) {
-        //grab the text from task-text element inside the list element and place it into the main task input field
+        //grab the task's current text and put it back in the main input box
+        //so the user can edit it and re-add it (this is a "delete + re-add" style edit)
         taskInput.value = li.querySelector(".task-text").textContent;
-        //TODO: add comment
+        //pre-fill the date field with this task's existing date
         taskDateInput.value = li.dataset.date;
-        //TODO: add comment
+        //pre-select this task's existing category in the dropdown
         taskCategorySelect.value = li.dataset.category;
         li.remove(); //if a task is being edited the existing task will be removed
         //add updateProgress false to update progress bar without checking task completion during editing or update
         updateProgress(false);
+        toggleEmptyState();
         //call saveTaskToLocalStorage to keep the task list updated for when task is deleted
         saveTaskToLocalStorage();
         //re renders the calendar view to clear the date marder for this task
@@ -446,6 +643,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateProgress(checkCompletion);
     //update calender when task is add
     renderCalendar();
+    //only save/sync when the user actually typed this (not when re-adding tasks loaded from storage)
+    if (!text) saveTaskToLocalStorage();
   };
 
   //create calender rendering function
@@ -508,8 +707,8 @@ document.addEventListener("DOMContentLoaded", () => {
         dayDiv.style.borderRadius = "4px";
       }
 
-      //TODO: explain what this does
-      //find every task assigned to this calendar date
+      //build the list of every task whose stored date matches this calendar
+      //cell's date, so we know what (if anything) to draw on this day
       const tasksOnDate = Array.from(taskList.querySelectorAll("li")).filter(
         (li) => li.dataset.date === dateString,
       );
@@ -582,12 +781,28 @@ document.addEventListener("DOMContentLoaded", () => {
       addTask();
     }
   });
-  //load saved categories before anything else needs them
+
+  //load saved categories before anything else needs them (this just restores
+  //local defaults/structure — it does not decide whether the app is shown)
   loadCategories();
   //fill the dropdown with those categories
   populateCategorySelect();
-  //call loadTaskFromLocalStorage() when the page starts or when it's refreshed to load the saved
-  loadTaskFromLocalStorage();
+
+  //gate the whole app behind login: only reveal the to-do UI and load/sync
+  //tasks if a token already exists from a previous visit; otherwise keep the
+  //app hidden and show the "sign in" message instead
+  if (getToken()) {
+    authStatus.textContent = "Signed in";
+    openAuthBtn.textContent = "Account";
+    logoutBtn.style.display = "inline-block";
+    showApp();
+    //show whatever was cached locally first for a snappier load, then
+    //pullFromServer() immediately refreshes it with the authoritative data
+    loadTaskFromLocalStorage();
+    pullFromServer();
+  } else {
+    hideApp();
+  }
 });
 
 //create a confetti functions and paste confetti function

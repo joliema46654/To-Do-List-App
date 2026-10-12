@@ -1,4 +1,4 @@
-const CACHE = "todo-v5";
+const CACHE = "todo-v10";
 const ASSETS = [
   "./",
   "index.html",
@@ -29,6 +29,10 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  if (e.request.url.includes("to-do-app-backend-7siu.onrender.com")) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(
       (cached) =>
